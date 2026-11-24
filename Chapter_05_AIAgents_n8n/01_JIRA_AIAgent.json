@@ -3,29 +3,16 @@
   "nodes": [
     {
       "parameters": {
-        "content": "Hello world chat\n"
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [
-        -560,
-        -176
-      ],
-      "typeVersion": 1,
-      "id": "65c1d797-8613-4fb1-8562-b7caf2a01ec8",
-      "name": "Sticky Note"
-    },
-    {
-      "parameters": {
         "public": true,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.5,
       "position": [
-        0,
-        0
+        560,
+        176
       ],
-      "id": "ca6aa6bf-99ca-4a72-80ab-813945b8c645",
+      "id": "97657106-c739-4331-a0d7-6b367ae0d845",
       "name": "When chat message received",
       "webhookId": "1153a416-21e7-43d1-8ce2-be9c5cfdcc1f"
     },
@@ -38,10 +25,10 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        224,
-        0
+        784,
+        176
       ],
-      "id": "ed56014d-1d83-402f-8590-a97b2cab9263",
+      "id": "f28eafe4-70fa-4862-8993-fc7430810efe",
       "name": "AI Agent"
     },
     {
@@ -52,14 +39,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
       "typeVersion": 1,
       "position": [
-        96,
-        208
+        656,
+        384
       ],
-      "id": "96d11905-b406-4887-abd7-d03a2a30ea3d",
+      "id": "f2bf2608-c486-4c88-9c79-b5008c0e5401",
       "name": "Groq Chat Model",
       "credentials": {
         "groqApi": {
-          "id": "wtV5zjodvbsIi710",
+          "id": "wWaEsCFoU8wiT1n9",
           "name": "Groq account"
         }
       }
@@ -73,15 +60,15 @@
       "type": "n8n-nodes-base.jiraTool",
       "typeVersion": 1,
       "position": [
-        384,
-        208
+        944,
+        384
       ],
-      "id": "5765f0e3-333a-49c1-8142-625db090fa33",
+      "id": "75daf541-1bba-4c46-9fe8-a84038501be7",
       "name": "Get an issue in Jira Software",
       "credentials": {
         "jiraSoftwareCloudApi": {
-          "id": "TJ34YqpTPB3otpW6",
-          "name": "Jira SW Cloud account"
+          "id": "bS1WhQn0fjeiK2Nq",
+          "name": "Jira SW Cloud account 2"
         }
       }
     }
@@ -125,15 +112,14 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": true
+    "binaryMode": "separate"
   },
-  "versionId": "f1bdecda-1c44-4326-896c-0961ebfe4bd6",
+  "versionId": "7790af7a-01a1-4c72-82ad-108f68521e31",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "c9443296b71a781317547c5cd3972254f49b47ace2982011f7ad007477f15fb9"
+    "instanceId": "86e7d9f5900d71cdf0ea06f680ca5db6b4d9dbf83edab4e0c3bde4fcad0e8525"
   },
   "nodeGroups": [],
-  "id": "eD9Dw8N66VdXeL2y",
+  "id": "XtPPt2Km0wkf73AR",
   "tags": []
 }
