@@ -1,0 +1,284 @@
+{
+  "name": "05_BugTriage_Bulk_JIRA_comments.json",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Give me a jira ticket. I will make sure that this properly bug traiged",
+        "options": {}
+      },
+      "id": "c1f3a7ad-e2ee-4dc2-ac6f-821619482ada",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "28da97f0-ea84-4e26-8d46-b4a6b6f99169"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61cf88bc-b030-423f-9e84-593a6adf9272",
+              "name": "IssueKeys",
+              "value": "={{ [...new Set($json.chatInput.toUpperCase().match(/[A-Z][A-Z0-9]+-\\d+/g) || [])] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "21580236-dd42-4478-971d-81c8323bed05",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "IssueKeys",
+        "options": {
+          "destinationFieldName": "IssueKey"
+        }
+      },
+      "id": "9a4cfd68-c061-49bb-a950-74601f92e819",
+      "name": "Split Issue Keys",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "issueKey": "={{ $json.IssueKey }}",
+        "additionalFields": {}
+      },
+      "id": "e35a8d77-8bf1-4755-8b58-8b0b449d857b",
+      "name": "Get an issue",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "bS1WhQn0fjeiK2Nq",
+          "name": "Jira SW Cloud account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Issue key :  {{ $json.key }}\n\nTitle : {{ $json.fields.summary }}\n\nDescription : {{ $json.fields.description }}",
+        "options": {
+          "systemMessage": "Based on Issue key, Title, Description give me response as json with keys \n{\n\"severity\" :\" \",\n\"priority\": \" \",\n\"comment\":\" \"\n}"
+        }
+      },
+      "id": "9e421723-0d35-4d02-afe5-6af59d46dc8e",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        864,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "541d36c8-c5eb-4542-8a88-ed18c5011c6f",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        736,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2483e1ce-bd8a-490d-8d26-0e8ddf1e3793",
+              "name": "issue key",
+              "value": "={{ $('Split Issue Keys').item.json.IssueKey }}",
+              "type": "string"
+            },
+            {
+              "id": "01bc1eae-54e7-4007-a2e1-c16ba4270388",
+              "name": "Comment",
+              "value": "={{ $json.output.parseJson().comment}}",
+              "type": "string"
+            },
+            {
+              "id": "963742f3-d1c4-4a71-be29-9b6f2d630be5",
+              "name": "Severity",
+              "value": "={{ $json.output.parseJson().severity }}",
+              "type": "string"
+            },
+            {
+              "id": "ebb1a014-00f3-4132-9d26-666cb0a4df35",
+              "name": "Priority",
+              "value": "={{ $json.output.parseJson().priority }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3f9d0319-3e8f-47eb-97ff-224b5b540805",
+      "name": "Get the Traiged comment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1344,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://searchrocket.atlassian.net/rest/api/3/issue/{{ $json['issue key'] }}/comment",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "jiraSoftwareCloudApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"body\": {\n    \"type\": \"doc\",\n    \"version\": 1,\n    \"content\": [\n      {\n        \"type\": \"paragraph\",\n        \"content\": [\n          {\n            \"type\": \"text\",\n            \"text\": {{ JSON.stringify($json.Comment) }}\n          }\n        ]\n      }\n    ]\n  }\n}\n",
+        "options": {}
+      },
+      "id": "3c4e110f-e76c-43d9-a249-6c989f5ffc70",
+      "name": "Update the JIRa with traiged comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1584,
+        144
+      ],
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "bS1WhQn0fjeiK2Nq",
+          "name": "Jira SW Cloud account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Issue Keys",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Issue Keys": {
+      "main": [
+        [
+          {
+            "node": "Get an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an issue": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Get the Traiged comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the Traiged comment": {
+      "main": [
+        [
+          {
+            "node": "Update the JIRa with traiged comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6ea9a0a6-afd1-4a26-956a-215e8e82a0d8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "86e7d9f5900d71cdf0ea06f680ca5db6b4d9dbf83edab4e0c3bde4fcad0e8525"
+  },
+  "nodeGroups": [],
+  "id": "FGUaMJ1UIqX9gKrD",
+  "tags": []
+}
