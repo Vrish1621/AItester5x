@@ -1,0 +1,173 @@
+{
+  "name": "08_Flaky_TestCase_AIAgent",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "flaky Testcase Finder",
+        "formDescription": "flaky Testcase Finder",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Build run 1",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "Build run 2",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4c6e4820-5c75-4d7c-840e-f250e0dddfdf",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -384,
+        0
+      ],
+      "webhookId": "0d2a46ae-c940-4ef2-98bf-f68927c943f1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst binary = item.binary || {};\nconst keys = Object.keys(binary).sort();\nif (keys.length < 2) {\n  throw new Error('Expected 2 uploaded files, got ' + keys.length + ': ' + keys.join(', '));\n}\nconst parts = [];\nfor (const key of keys) {\n  const buf = await this.helpers.getBinaryDataBuffer(0, key);\n  parts.push({ key: key, fileName: binary[key].fileName || key, text: buf.toString('utf8') });\n}\nconst merged = parts\n  .map((p, i) => '===== Build Run ' + (i + 1) + ' (' + p.fileName + ') =====\\n' + p.text)\n  .join('\\n\\n');\nconst file = await this.helpers.prepareBinaryData(Buffer.from(merged, 'utf8'), 'merged_builds.txt', 'text/plain');\nreturn [{\n  json: {\n    combined: merged,\n    build_run_1: { fileName: parts[0].fileName, file: parts[0].text },\n    build_run_2: { fileName: parts[1].fileName, file: parts[1].text }\n  },\n  binary: { data: file }\n}];"
+      },
+      "id": "8b1a3333-01e5-41a5-a168-c611884f7500",
+      "name": "Merge Files to Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You will get two build runs \nbuild_run_1 {{ $json.build_run_1.file}}:{{ $json.build_run_1.file}}\nbuild_run_2 {{ $json.build_run_2.file}}:{{ $json.build_run_2.file}}",
+        "options": {
+          "systemMessage": "You receive two json file which contains past testcases Build no 1 & Build no 2 your task is to give me flaky testcase as result.\n\ngive me a proper json file without any special charcters & /n\n\n{\n\n\"total_TestCase: \"\"\n\"Flaky_TestCases : []\n\n}\n\ngive me list of Flaky_TestCases as json wothout /n"
+        }
+      },
+      "id": "6a0b64c6-e003-4065-98e6-ab307f3939b8",
+      "name": "Perform the flaky analysis",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        608,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "128e31b8-bd3b-47e3-a092-160984d83ca9",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        272
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "vrishabhpatil94@gmail.com",
+        "toEmail": "patilvrishabh94@gmail.com",
+        "subject": "Flaky TestCase Report",
+        "emailFormat": "text",
+        "text": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "425ec769-9c23-42e2-a360-c577ec18afd7",
+      "name": "Send an Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        976,
+        0
+      ],
+      "webhookId": "9432a57a-7edd-4f32-9fdf-44d850813628",
+      "credentials": {
+        "smtp": {
+          "id": "01i73rSks6C0tkkV",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Merge Files to Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Files to Text": {
+      "main": [
+        [
+          {
+            "node": "Perform the flaky analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perform the flaky analysis": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Perform the flaky analysis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3f4ddb2d-0bb4-4cc7-aa99-edfe5bf5e80f",
+  "meta": {
+    "instanceId": "86e7d9f5900d71cdf0ea06f680ca5db6b4d9dbf83edab4e0c3bde4fcad0e8525"
+  },
+  "nodeGroups": [],
+  "id": "zlPbYK0jeEQEjUcw",
+  "tags": []
+}
